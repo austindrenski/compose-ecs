@@ -119,11 +119,6 @@ func (b *ComposeECS) resolveServiceImagesDigests(ctx context.Context, project *t
 }
 
 func (b *ComposeECS) convert(ctx context.Context, project *types.Project) (*cloudformation.Template, error) {
-	err := b.checkCompatibility(project)
-	if err != nil {
-		return nil, err
-	}
-
 	template := cloudformation.NewTemplate()
 	resources, err := b.parse(ctx, project, template)
 	if err != nil {
