@@ -8,7 +8,7 @@ require (
 	github.com/cnabio/cnab-to-oci v0.3.1-beta1
 	github.com/compose-spec/compose-go v1.20.0
 	github.com/distribution/distribution/v3 v3.0.0-20210316161203-a01c71e2477e
-	github.com/docker/cli v25.0.1+incompatible
+	github.com/docker/cli v25.0.3+incompatible
 	github.com/docker/compose/v2 v2.24.5
 	github.com/docker/go-units v0.5.0
 	github.com/golang/mock v1.6.0
