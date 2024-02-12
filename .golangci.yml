@@ -2,25 +2,25 @@ linters:
   run:
     concurrency: 2
     skip-dirs:
-      - tests/composefiles
+    - tests/composefiles
   enable-all: false
   disable-all: true
   enable:
-    - errcheck
-    - gocyclo
-    - gofmt
-    - goimports
-    - gosimple
-    - govet
-    - ineffassign
-    - lll
-    - misspell
-    - nakedret
-    - staticcheck
-    - typecheck
-    - unconvert
-    - unparam
-    - unused
+  - errcheck
+  - gocyclo
+  - gofmt
+  - goimports
+  - gosimple
+  - govet
+  - ineffassign
+  - lll
+  - misspell
+  - nakedret
+  - staticcheck
+  - typecheck
+  - unconvert
+  - unparam
+  - unused
 linters-settings:
   gocyclo:
     min-complexity: 16
@@ -29,8 +29,5 @@ linters-settings:
   goimports:
     local-prefixes: github.com/docker/compose-ecs
 issues:
-  # golangci hides some golint warnings (the warning about exported things
-  # withtout documentation for example), this will make it show them anyway.
-  exclude-use-default: false
   exclude:
-    - should not use dot imports
+  - should not use dot imports

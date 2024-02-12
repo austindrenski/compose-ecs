@@ -22,8 +22,6 @@ import (
 	"github.com/aws/aws-sdk-go/service/cloudformation"
 	"github.com/aws/aws-sdk-go/service/ecs"
 	"github.com/docker/compose/v2/pkg/api"
-
-	"github.com/docker/compose-ecs/api/secrets"
 )
 
 const (
@@ -60,10 +58,6 @@ type API interface {
 	ListStackParameters(ctx context.Context, name string) (map[string]string, error)
 	ListStackResources(ctx context.Context, name string) (stackResources, error)
 	DeleteStack(ctx context.Context, name string) error
-	CreateSecret(ctx context.Context, secret secrets.Secret) (string, error)
-	InspectSecret(ctx context.Context, id string) (secrets.Secret, error)
-	ListSecrets(ctx context.Context) ([]secrets.Secret, error)
-	DeleteSecret(ctx context.Context, id string, recover bool) error
 	GetLogs(ctx context.Context, name string, consumer func(container string, service string, message string), follow bool) error
 	DescribeService(ctx context.Context, cluster string, arn string) (api.ServiceStatus, error)
 	DescribeServiceTasks(ctx context.Context, cluster string, project string, service string) ([]api.ContainerSummary, error)

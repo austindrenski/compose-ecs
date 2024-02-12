@@ -1,8 +1,0 @@
-# Backends shouldn't depend on other backends or the cli
-- path: ./ecs
-  forbiddenImports:
-    - github.com/docker/compose-ecs/cli
-- path: ./local
-  forbiddenImports:
-    - github.com/docker/compose-ecs/cli
-    - github.com/docker/compose-ecs/ecs

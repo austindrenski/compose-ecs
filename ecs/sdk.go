@@ -57,7 +57,6 @@ import (
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 
-	"github.com/docker/compose-ecs/api/secrets"
 	"github.com/docker/compose-ecs/internal"
 )
 
@@ -81,6 +80,10 @@ var _ API = sdk{}
 
 // UserAgentName is the ECS specific user agent used by the cli
 const UserAgentName = "Compose ECS"
+
+func NewAPI(sess *session.Session) API {
+	return newSDK(sess)
+}
 
 func newSDK(sess *session.Session) sdk {
 	sess.Handlers.Build.PushBack(func(r *request.Request) {
@@ -728,86 +731,6 @@ func (s sdk) DeleteStack(ctx context.Context, name string) error {
 	_, err := s.CF.DeleteStackWithContext(ctx, &cloudformation.DeleteStackInput{
 		StackName: aws.String(name),
 	})
-	return err
-}
-
-func (s sdk) CreateSecret(ctx context.Context, secret secrets.Secret) (string, error) {
-	logrus.Debug("Create secret " + secret.Name)
-	var tags []*secretsmanager.Tag
-	for k, v := range secret.Labels {
-		tags = []*secretsmanager.Tag{
-			{
-				Key:   aws.String(k),
-				Value: aws.String(v),
-			},
-		}
-	}
-	// store the secret content as string
-	content := string(secret.GetContent())
-	response, err := s.SM.CreateSecret(&secretsmanager.CreateSecretInput{
-		Name:         &secret.Name,
-		SecretString: &content,
-		Tags:         tags,
-	})
-	if err != nil {
-		return "", err
-	}
-	return aws.StringValue(response.ARN), nil
-}
-
-func (s sdk) InspectSecret(ctx context.Context, id string) (secrets.Secret, error) {
-	logrus.Debug("Inspect secret " + id)
-	response, err := s.SM.DescribeSecret(&secretsmanager.DescribeSecretInput{SecretId: &id})
-	if err != nil {
-		return secrets.Secret{}, err
-	}
-	tags := map[string]string{}
-	for _, tag := range response.Tags {
-		tags[aws.StringValue(tag.Key)] = aws.StringValue(tag.Value)
-	}
-
-	secret := secrets.Secret{
-		ID:     aws.StringValue(response.ARN),
-		Name:   aws.StringValue(response.Name),
-		Labels: tags,
-	}
-	return secret, nil
-}
-
-func (s sdk) ListSecrets(ctx context.Context) ([]secrets.Secret, error) {
-	logrus.Debug("List secrets ...")
-	var ls []secrets.Secret
-	var token *string
-	for {
-		response, err := s.SM.ListSecrets(&secretsmanager.ListSecretsInput{})
-		if err != nil {
-			return nil, err
-		}
-
-		for _, sec := range response.SecretList {
-
-			tags := map[string]string{}
-			for _, tag := range sec.Tags {
-				tags[*tag.Key] = *tag.Value
-			}
-			ls = append(ls, secrets.Secret{
-				ID:     *sec.ARN,
-				Name:   *sec.Name,
-				Labels: tags,
-			})
-		}
-
-		if token == response.NextToken {
-			return ls, nil
-		}
-		token = response.NextToken
-	}
-}
-
-func (s sdk) DeleteSecret(ctx context.Context, id string, recover bool) error {
-	logrus.Debug("List secrets ...")
-	force := !recover
-	_, err := s.SM.DeleteSecret(&secretsmanager.DeleteSecretInput{SecretId: &id, ForceDeleteWithoutRecovery: &force})
 	return err
 }
 

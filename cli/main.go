@@ -1,90 +1,69 @@
-/*
-   Copyright 2020 Docker Compose CLI authors
-
-   Licensed under the Apache License, Version 2.0 (the "License");
-   you may not use this file except in compliance with the License.
-   You may obtain a copy of the License at
-
-       http://www.apache.org/licenses/LICENSE-2.0
-
-   Unless required by applicable law or agreed to in writing, software
-   distributed under the License is distributed on an "AS IS" BASIS,
-   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-   See the License for the specific language governing permissions and
-   limitations under the License.
-*/
-
 package main
 
 import (
-	"context"
 	"fmt"
-	"os"
-	"os/signal"
-	"syscall"
-
-	"github.com/docker/compose/v2/cmd/compose"
-	"github.com/spf13/cobra"
-
-	"github.com/docker/compose-ecs/api/backend"
-	"github.com/docker/compose-ecs/cli/cmd"
-	"github.com/docker/compose-ecs/cli/cmd/volume"
+	"github.com/docker/cli/cli"
+	"github.com/docker/cli/cli-plugins/manager"
+	"github.com/docker/cli/cli-plugins/plugin"
+	"github.com/docker/cli/cli/command"
 	"github.com/docker/compose-ecs/ecs"
+	"github.com/docker/compose-ecs/internal"
+	"github.com/docker/compose/v2/cmd/compatibility"
+	commands "github.com/docker/compose/v2/cmd/compose"
+	"github.com/docker/compose/v2/pkg/compose"
+	"github.com/spf13/cobra"
+	"os"
 )
 
 func main() {
-	root := &cobra.Command{
-		Use:              "compose-ecs",
-		SilenceErrors:    true,
-		SilenceUsage:     true,
-		TraverseChildren: true,
-		RunE: func(cmd *cobra.Command, args []string) error {
-			if len(args) == 0 {
-				return cmd.Help()
-			}
-			return fmt.Errorf("unknown command: %q", args[0])
-		},
+	if plugin.RunningStandalone() {
+		os.Args = append([]string{"docker"}, compatibility.Convert(os.Args[1:])...)
 	}
 
-	root.AddCommand(
-		cmd.VersionCommand(),
-		cmd.SecretCommand(),
-		volume.Command(),
-	)
+	plugin.Run(func(dockerCli command.Cli) *cobra.Command {
 
-	ctx, cancel := newSigContext()
-	defer cancel()
-
-	service, err := ecs.NewComposeECS()
-	if err != nil {
-		fmt.Fprintln(os.Stderr, err.Error())
-		os.Exit(1)
-	}
-	backend.WithBackend(service)
-
-	command := compose.RootCommand(service.ComposeService())
-
-	for _, c := range command.Commands() {
-		switch c.Name() {
-		case "convert", "down", "logs", "ps", "up": // compose-ecs only implement a subset of compose commands
-			root.AddCommand(c)
+		service, err := ecs.NewComposeECS()
+		if err != nil {
+			_, _ = fmt.Fprintln(os.Stderr, err.Error())
+			os.Exit(1)
 		}
-	}
 
-	err = root.ExecuteContext(ctx)
-	if err != nil {
-		fmt.Fprintln(os.Stderr, err.Error())
-		os.Exit(1)
-	}
-}
+		root := &cobra.Command{
+			Use:              "compose-ecs",
+			SilenceErrors:    true,
+			SilenceUsage:     true,
+			TraverseChildren: true,
+			RunE: func(cmd *cobra.Command, args []string) error {
+				if len(args) == 0 {
+					return cmd.Help()
+				}
+				return fmt.Errorf("unknown command: %q", args[0])
+			},
+		}
 
-func newSigContext() (context.Context, func()) {
-	ctx, cancel := context.WithCancel(context.Background())
-	s := make(chan os.Signal, 1)
-	signal.Notify(s, syscall.SIGTERM, syscall.SIGINT)
-	go func() {
-		<-s
-		cancel()
-	}()
-	return ctx, cancel
+		root.AddCommand(&cobra.Command{
+			Use:   "version",
+			Short: "Show the Docker version information",
+			Args:  cobra.MaximumNArgs(0),
+			RunE: func(cmd *cobra.Command, _ []string) error {
+				fmt.Printf("Compose ECS %s\n", internal.Version)
+				return nil
+			},
+		})
+
+		rootCommand := commands.RootCommand(dockerCli, service)
+
+		rootCommand.SetFlagErrorFunc(func(c *cobra.Command, err error) error {
+			return cli.StatusError{
+				StatusCode: compose.CommandSyntaxFailure.ExitCode,
+				Status:     err.Error(),
+			}
+		})
+
+		return rootCommand
+	}, manager.Metadata{
+		SchemaVersion: "0.1.0",
+		Vendor:        "austin@austindrenski.io",
+		Version:       internal.Version,
+	})
 }

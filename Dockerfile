@@ -1,4 +1,4 @@
-# syntax=docker/dockerfile:1
+# syntax = docker/dockerfile:1.6
 
 #   Copyright 2020 Docker Compose CLI authors
 
@@ -14,11 +14,7 @@
 #   See the License for the specific language governing permissions and
 #   limitations under the License.
 
-ARG GO_VERSION=1.19-alpine
-ARG GOLANGCI_LINT_VERSION=v1.50.1-alpine
-ARG PROTOC_GEN_GO_VERSION=v1.5.2
-
-FROM --platform=${BUILDPLATFORM} golang:${GO_VERSION} AS base
+FROM --platform=${BUILDPLATFORM} golang:1.22.0-alpine AS base
 WORKDIR /compose-ecs
 RUN apk add --no-cache -vv \
     git \
@@ -32,12 +28,11 @@ RUN --mount=type=cache,target=/go/pkg/mod \
     go mod download
 
 FROM base AS make-protos
-ARG PROTOC_GEN_GO_VERSION
-RUN go install github.com/golang/protobuf/protoc-gen-go@${PROTOC_GEN_GO_VERSION}
+RUN go install github.com/golang/protobuf/protoc-gen-go@v1.5.2
 COPY . .
 RUN make -f builder.Makefile protos
 
-FROM golangci/golangci-lint:${GOLANGCI_LINT_VERSION} AS lint-base
+FROM golangci/golangci-lint:v1.50.1-alpine AS lint-base
 
 FROM base AS lint
 ENV GOFLAGS="-buildvcs=false"
