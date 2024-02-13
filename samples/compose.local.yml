@@ -1,0 +1,22 @@
+services:
+  localstack:
+    image: localstack/localstack
+    ports:
+    - 4566:4566
+    - 4510-4559:4510-4559
+
+  otel:
+    secrets:
+    - DD_API_KEY
+
+  some_service:
+    ports:
+    - 80:8080
+    secrets:
+    - SomeOptions__Token
+
+secrets:
+  DD_API_KEY:
+    file: ~/.dd-api-key
+  SomeOptions__Token:
+    file: ~/.some-options-token

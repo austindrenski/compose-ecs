@@ -106,5 +106,5 @@ $ compose-ecs convert
 ```
 
 
-Please create [issues](https://github.com/docker/compose-ecs/issues) to leave feedback.
+Please create [issues](https://github.com/austindrenski/compose-ecs/issues) to leave feedback.
 

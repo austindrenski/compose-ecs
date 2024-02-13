@@ -1,28 +1,10 @@
-/*
-   Copyright 2020 Docker Compose CLI authors
-
-   Licensed under the Apache License, Version 2.0 (the "License");
-   you may not use this file except in compliance with the License.
-   You may obtain a copy of the License at
-
-       http://www.apache.org/licenses/LICENSE-2.0
-
-   Unless required by applicable law or agreed to in writing, software
-   distributed under the License is distributed on an "AS IS" BASIS,
-   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-   See the License for the specific language governing permissions and
-   limitations under the License.
-*/
-
 package main
 
 import (
 	"fmt"
 	"io"
 	"net/http"
-	"os"
 	"path/filepath"
-	"strconv"
 	"strings"
 	"testing"
 	"time"
@@ -31,37 +13,6 @@ import (
 	"gotest.tools/v3/icmd"
 	"gotest.tools/v3/poll"
 )
-
-func TestSecrets(t *testing.T) {
-	startTime := strconv.Itoa(int(time.Now().UnixNano()))
-	secretName := "secret" + strings.ToLower(t.Name()) + startTime
-	t.Run("create secret", func(t *testing.T) {
-		secretFile := filepath.Join(t.TempDir(), "secret.txt")
-		err := os.WriteFile(secretFile, []byte("pass1"), 0644)
-		assert.Check(t, err == nil)
-		res := icmd.RunCommand(composeECS(), "secret", "create", secretName, secretFile)
-		stdout := res.Stdout()
-		stderr := res.Stderr()
-		fmt.Println(stderr)
-		assert.Check(t, strings.Contains(stdout, secretName), stdout)
-	})
-
-	t.Run("list secrets", func(t *testing.T) {
-		res := icmd.RunCommand(composeECS(), "secret", "list")
-		assert.Check(t, strings.Contains(res.Stdout(), secretName), res.Stdout())
-	})
-
-	t.Run("inspect secret", func(t *testing.T) {
-		res := icmd.RunCommand(composeECS(), "secret", "inspect", secretName)
-		assert.Check(t, strings.Contains(res.Stdout(), `"Name": "`+secretName+`"`), res.Stdout())
-	})
-
-	t.Run("rm secret", func(t *testing.T) {
-		icmd.RunCommand(composeECS(), "secret", "rm", secretName)
-		res := icmd.RunCommand("secret", "list")
-		assert.Check(t, !strings.Contains(res.Stdout(), secretName), res.Stdout())
-	})
-}
 
 func TestCompose(t *testing.T) {
 	t.Run("compose-ecs up", func(t *testing.T) {

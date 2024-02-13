@@ -19,4 +19,7 @@ jobs:
         go-version-file: go.mod
 
     - name: Test
-      run: make -f builder.Makefile test
+      run: go test -C go -v ./...
+
+    - name: Build compose-ecs
+      run: go build -v ./cmd

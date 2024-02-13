@@ -1,0 +1,74 @@
+services:
+  otel:
+    deploy:
+      replicas: 10
+    secrets:
+    - DD_API_KEY
+    x-aws-pull_credentials: &x-aws-pull_credentials ${AWS_PULL_CREDENTIALS_ARN}
+
+  some_service:
+    deploy:
+      resources:
+        limits:
+          cpus: '1.00'
+          memory: 2g
+    dns_search:
+    - ${COMPOSE_PROJECT}.local
+    environment:
+      DOTNET_gcServer: ${DOTNET_gcServer:-0}
+    secrets:
+    - SomeOptions__Token
+    ulimits:
+      nofile:
+        soft: 65535
+        hard: 65535
+    x-aws-pull_credentials: *x-aws-pull_credentials
+    x-aws-role:
+      Version: 2012-10-17
+      Statement:
+      - Action:
+        - s3:GetObject
+        Effect: Allow
+        Resource:
+        - arn:aws:s3:::some-bucket
+
+secrets:
+  DD_API_KEY:
+    external: true
+    name: ${DD_API_KEY_ARN}
+  SomeOptions__Token:
+    external: true
+    name: ${SOME_OPTIONS_TOKEN_ARN}
+
+x-aws-loadbalancer: ${AWS_LOAD_BALANCER_ARN}
+x-aws-subnets:
+- ${AWS_SUBNET_ID_A}
+- ${AWS_SUBNET_ID_B}
+- ${AWS_SUBNET_ID_C}
+x-aws-vpc: ${AWS_VPC_ID}
+
+x-aws-cloudformation:
+  Resources:
+    OtelTCP4318TargetGroup:
+      Properties:
+        HealthCheckPort: &otel-health-check-port 13133
+        TargetGroupAttributes: &target-group-attributes
+        - Key: deregistration_delay.timeout_seconds
+          Value: 5
+    OtelTCP13133TargetGroup:
+      Properties:
+        HealthCheckPort: *otel-health-check-port
+        TargetGroupAttributes: *target-group-attributes
+    OtelTCP55679TargetGroup:
+      Properties:
+        HealthCheckPort: *otel-health-check-port
+        TargetGroupAttributes: *target-group-attributes
+    SomeServiceTCP8080Listener:
+      Properties:
+        Certificates:
+        - CertificateArn: ${AWS_CERTIFICATE_ARN}
+        Port: 443
+        Protocol: TLS
+    SomeServiceTCP8080TargetGroup:
+      Properties:
+        TargetGroupAttributes: *target-group-attributes

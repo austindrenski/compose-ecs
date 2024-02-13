@@ -1,0 +1,27 @@
+services:
+  otel:
+    environment:
+      OTEL_DEBUG_VERBOSITY: normal
+      OTEL_DEPLOYMENT_ENVIRONMENT: dev
+      OTEL_SAMPLING_PERCENTAGE: 100
+    image: ghcr.io/open-telemetry/opentelemetry-collector-releases/opentelemetry-collector-contrib:latest
+    ports:
+    - 4318
+    - 13133
+    - 55679
+
+  some_service:
+    depends_on:
+      otel:
+        condition: service_started
+    environment:
+      OTEL_DOTNET_EXPERIMENTAL_OTLP_EMIT_EVENT_LOG_ATTRIBUTES: true
+      OTEL_DOTNET_EXPERIMENTAL_OTLP_EMIT_EXCEPTION_LOG_ATTRIBUTES: true
+      OTEL_EXPORTER_OTLP_ENDPOINT: http://otel:4318
+      OTEL_EXPORTER_OTLP_PROTOCOL: http/protobuf
+      OTEL_SEMCONV_STABILITY_OPT_IN: http
+    healthcheck:
+      test: wget -t1 -qO- http://localhost:8080/health
+    image: ghcr.io/austindrenski/some_service:latest
+    ports:
+    - 8080
