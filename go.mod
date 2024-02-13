@@ -6,7 +6,7 @@ require (
 	github.com/aws/aws-sdk-go v1.44.245
 	github.com/awslabs/goformation/v4 v4.15.6
 	github.com/cnabio/cnab-to-oci v0.3.1-beta1
-	github.com/compose-spec/compose-go v1.20.0
+	github.com/compose-spec/compose-go v1.20.2
 	github.com/distribution/distribution/v3 v3.0.0-20210316161203-a01c71e2477e
 	github.com/docker/cli v25.0.3+incompatible
 	github.com/docker/compose/v2 v2.24.5
