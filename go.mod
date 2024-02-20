@@ -3,7 +3,7 @@ module github.com/docker/compose-ecs
 go 1.19
 
 require (
-	github.com/aws/aws-sdk-go v1.44.245
+	github.com/aws/aws-sdk-go v1.50.21
 	github.com/awslabs/goformation/v4 v4.15.6
 	github.com/cnabio/cnab-to-oci v0.3.1-beta1
 	github.com/compose-spec/compose-go v1.20.0
